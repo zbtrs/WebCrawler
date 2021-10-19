@@ -17,8 +17,10 @@ def solve(soup, driver):  # 应该把所有数据给封装起来
     dict.update({"License":License[-1].strip()})
     Languages = soup.xpath('//li[@class="d-inline"]/a/span[1]')
     Proportions = soup.xpath('//li[@class="d-inline"]/a/span[2]')
+    LanguageList = {}
     for i in range(len(Languages)):
-        dict.update({Languages[i].text:Proportions[i].text})
+        LanguageList.update({Languages[i].text:Proportions[i].text})
+    dict.update({"Languages":LanguageList})
     Next = soup.xpath('//a[@class="pl-3 pr-3 py-3 p-md-0 mt-n3 mb-n3 mr-n3 m-md-0 Link--primary no-underline no-wrap"]')
     NextUrl = 'https://github.com' + Next[0].attrib.get('href')
     IssuesUrl = 'https://github.com'
@@ -34,6 +36,7 @@ def solve(soup, driver):  # 应该把所有数据给封装起来
     for i in range(min(5,len(Committers))):
         dict.update({"commit " + str(i + 1): Committers[i].text.strip() + " " + CommitMessages[i].text.strip() + " " +
                                              CommitHashs[i].text.strip()})
+
     if IssuesUrl != 'https://github.com':
         driver.get(IssuesUrl)
         soup = etree.HTML(driver.page_source)
@@ -49,7 +52,10 @@ def solve(soup, driver):  # 应该把所有数据给封装起来
             Bodys = soup.xpath('//div[@class="edit-comment-hide"]//p//text()')
             for value in Bodys:
                 Body += value.strip()
-            dict.update({"Issue " + str(i + 1): "Title: " + title + "\n" + "Body: " + Body})
+            Issuedict = {}
+            Issuedict.update({"Title":title})
+            Issuedict.update({"Body":Body})
+            dict.update({"Issue " + str(i + 1):Issuedict})
     OutFile.append(dict)
 
 def main():
@@ -62,12 +68,11 @@ def main():
     for value in List:
         if value.attrib.get('data-hovercard-type') == 'repository':
             NextList.append(value)
-
     for value in NextList:
         nextUrl = 'https://github.com' + value.get('href')
         driver.get(nextUrl)
         solve(etree.HTML(driver.page_source), driver)
-    time.sleep(10)
+    time.sleep(3)
 
 if __name__ == '__main__':
     main()
